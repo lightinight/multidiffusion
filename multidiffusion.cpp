@@ -1,20 +1,26 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <map>
+#include <cmath>
 #include <string>
 #include <sstream>
 
 using namespace std;
+
+#include "mobility.cpp"
 
 class MultiDiffusion
 {
 private:
 	vector< vector<double> > conc;
 	vector< vector<double> > dconc;
+    Diffusivity d;
 public:
 	int cnum;
 	int gridnum;
 	MultiDiffusion(){};
+    void setDiffusivity(const Diffusivity&);
 	void initializeVariable(vector< vector<double> >* var, int cnum_, int gridnum_);
 	void setVariable(vector< vector<double> >* var, double value);
 	void setSystem(int, int);
@@ -25,6 +31,11 @@ public:
 	void outputAll(string pathname);
 	void evolution(int);
 };
+
+void MultiDiffusion::setDiffusivity(const Diffusivity& temp)
+{
+    d = temp;
+}
 
 void MultiDiffusion::initializeVariable(vector< vector<double> >* var, int cnum_, int gridnum_)
 {
@@ -102,11 +113,14 @@ void MultiDiffusion::outputAll(string pathname)
 
 void MultiDiffusion::calculateIncrement()
 {
-	vector< vector<double> > D = {{1.0e-8, 1.0e-8}, {1.0e-8, 1.0e-8}};
-
-	for(int i=0; i<cnum-1; i++)
+    double T = 900;
+    vector<double> x;
+    x.resize(cnum);
+	for(int j=1; j<gridnum-1; j++)
 	{
-		for(int j=1; j<gridnum-1; j++)
+        for(int k=0; k<cnum; k++) {x[k] = conc[k][j];}
+        vector< vector<double> > D = d.getchemicalmatrix(x, T);
+		for(int i=0; i<cnum-1; i++)
 		{
 			dconc[i][j] = 0;
 			for(int k=0; k<cnum-1; k++)
@@ -116,7 +130,6 @@ void MultiDiffusion::calculateIncrement()
 			}
 		}
 	}
-	
 }
 
 void MultiDiffusion::update()
@@ -160,11 +173,12 @@ int main()
 	vector<double> cleft = {0.2, 0.3, 0.5};
 	vector<double> cright = {0.6, 0.2, 0.2};
 	MultiDiffusion temp;
+    temp.setDiffusivity(makediffusivity());
 	temp.setSystem(cnum, gridnum);
 	temp.setCouple(pos, cleft, cright);
 	string pathname = "test.txt";
 	//temp.outputAll(pathname);
-	temp.evolution(10000);
+	temp.evolution(200);
 	temp.outputAll(pathname);
 }
 
