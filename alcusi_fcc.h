@@ -1,4 +1,4 @@
-
+#define R 8.314
 double Gibbs_FCC_A1(vector<double> x, double T)			
 {
 	double x_AL = x[0];
