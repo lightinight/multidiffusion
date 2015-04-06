@@ -1,0 +1,1 @@
+g++ multidiffusion.cpp example.cpp -o test.exe --std=gnu++11
