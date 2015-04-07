@@ -3,11 +3,11 @@ void MultiDiffusion::setDiffusivity(const Diffusivity& temp)
 {
     d = temp;
 }
-void MultiDiffusion::initializeVariable(vector< vector<double> >* var, int cnum_, int gridnum_)
+void MultiDiffusion::initializeVariable(vector< vector<double> >* var, int _cnum, int _gridnum)
 {
-	cnum = cnum_;
-	gridnum = gridnum_;
-	cout<<cnum<<" "<<gridnum<<endl;
+	cnum = _cnum;
+	gridnum = _gridnum;
+	cout<<_cnum<<" "<<_gridnum<<endl;
 	var->resize(cnum);
 	vector< vector<double> >::iterator iter;
 	for(iter=var->begin(); iter<var->end(); iter++)
@@ -28,10 +28,10 @@ void MultiDiffusion::setVariable(vector< vector<double> >* var, double value)
 		}
 	}
 }
-void MultiDiffusion::setSystem(int cnum_, int gridnum_)
+void MultiDiffusion::setSystem(int _cnum, int _gridnum)
 {
-	initializeVariable(&conc, cnum_, gridnum_);
-	initializeVariable(&dconc, cnum_, gridnum_);
+	initializeVariable(&conc, _cnum, _gridnum);
+	initializeVariable(&dconc, _cnum, _gridnum);
 }
 void MultiDiffusion::setCouple(vector<int> pos, vector<double> cleft, vector<double> cright)
 {
@@ -70,9 +70,8 @@ void MultiDiffusion::outputAll(string pathname)
 {
 	outputVariable(conc, pathname);
 }
-void MultiDiffusion::calculateIncrement()
+void MultiDiffusion::calculateIncrement(double T)
 {
-    double T = 900;
     vector<double> x;
     x.resize(cnum);
 	for(int j=1; j<gridnum-1; j++)
@@ -90,10 +89,8 @@ void MultiDiffusion::calculateIncrement()
 		}
 	}
 }
-void MultiDiffusion::update()
+void MultiDiffusion::update(double dx, double dt)
 {
-	double dx = 1.0e-5;
-	double dt = 1.0e-6;
 	for(int i=0; i<cnum-1; i++)
 	{
 		for(int j=1; j<gridnum-1; j++)
@@ -112,12 +109,12 @@ void MultiDiffusion::update()
 		conc[cnum-1][j] = 1-temp;
 	}
 }
-void MultiDiffusion::evolution(int time)
+void MultiDiffusion::evolution(int time, double T, double dx, double dt)
 {
 	for(int tstep=0; tstep<time; tstep++)
 	{
-		calculateIncrement();
-		update();
+		calculateIncrement(T);
+		update(dx, dt);
 		cout<<tstep<<endl;
 	}
 }
