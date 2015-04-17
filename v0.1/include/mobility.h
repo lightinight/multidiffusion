@@ -53,4 +53,5 @@ public:
     void setmobility(Mobility);
 	std::vector< std::vector<double> > getintrinsicmatrix(std::vector<double> x, double T, std::vector<double>);
     std::vector< std::vector<double> > getchemicalmatrix(std::vector<double> x, double T, int ref=-1);
+    double& getpointer(Variable);
 };

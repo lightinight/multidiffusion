@@ -161,3 +161,8 @@ vector< vector<double> > \
     }
     return dc;
 }
+
+double& Diffusivity::getpointer(Variable var)
+{
+    return m.getpointer(var);
+}

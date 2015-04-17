@@ -3,7 +3,7 @@ void MultiDiffusion::setDiffusivity(const Diffusivity& temp)
 {
     d = temp;
 }
-void MultiDiffusion::initializeVariable(vector< vector<double> >* var, int _cnum, int _gridnum)
+void MultiDiffusion::__initVariable(vector< vector<double> >* var, int _cnum, int _gridnum)
 {
 	cnum = _cnum;
 	gridnum = _gridnum;
@@ -14,9 +14,9 @@ void MultiDiffusion::initializeVariable(vector< vector<double> >* var, int _cnum
 	{
 		iter->resize(gridnum);
 	}
-	setVariable(var, 0.0);
+	__setVariable(var, 0.0);
 }
-void MultiDiffusion::setVariable(vector< vector<double> >* var, double value)
+void MultiDiffusion::__setVariable(vector< vector<double> >* var, double value)
 {
 	vector< vector<double> >::iterator iter;
 	for(iter=var->begin(); iter<var->end(); iter++)
@@ -30,8 +30,8 @@ void MultiDiffusion::setVariable(vector< vector<double> >* var, double value)
 }
 void MultiDiffusion::setSystem(int _cnum, int _gridnum)
 {
-	initializeVariable(&conc, _cnum, _gridnum);
-	initializeVariable(&dconc, _cnum, _gridnum);
+	__initVariable(&conc, _cnum, _gridnum);
+	__initVariable(&dconc, _cnum, _gridnum);
 }
 void MultiDiffusion::setCouple(vector<int> pos, vector<double> cleft, vector<double> cright)
 {
@@ -83,7 +83,7 @@ void MultiDiffusion::calculateIncrement(double T)
 			dconc[i][j] = 0;
 			for(int k=0; k<cnum-1; k++)
 			{
-				dconc[i][j] += D[i][k]*(conc[k][j+1]-conc[k][j])+
+				dconc[i][j] += D[i][k]*(conc[k][j+1]-conc[k][j])-
 					D[i][k]*(conc[k][j]-conc[k][j-1]);
 			}
 		}
@@ -106,15 +106,29 @@ void MultiDiffusion::update(double dx, double dt)
 		{
 			temp += conc[k][j];
 		}
-		conc[cnum-1][j] = 1-temp;
+		conc[cnum-1][j] = 1.0-temp;
 	}
 }
 void MultiDiffusion::evolution(int time, double T, double dx, double dt)
 {
+    checkConserved();
 	for(int tstep=0; tstep<time; tstep++)
 	{
 		calculateIncrement(T);
 		update(dx, dt);
-		cout<<tstep<<endl;
+		cout<<tstep<<endl;		
 	}
+	checkConserved();
+}
+void MultiDiffusion::checkConserved()
+{
+    for(int i=0; i<cnum; i++)
+    {
+        double sum = 0;
+        for(int j=0; j<gridnum; j++)
+        {
+            sum += conc[i][j];
+        }
+        cout<<"concentration "<<i<<": "<<sum/gridnum<<endl;
+    }
 }

@@ -23,7 +23,7 @@ public:
     Polynomial poly;
     int parameter_order;
     int index;
-    string symbol;
+    std::string symbol;
     std::vector<int> constituent;
 public:
     Parameter() {;}
