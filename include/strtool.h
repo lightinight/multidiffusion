@@ -13,15 +13,6 @@ int split(const std::string& str, std::vector<std::string>& ret_, std::string se
 std::string replace(const std::string& str, const std::string& src, const std::string& dest);
 
 int to_upper(int);
-
-std::string anytostring(int num)
-{
-    return std::to_string(num);
-}
-std::string anytostring(long num)
-{
-    return std::to_string(num);
-}
 }
 #endif
 

@@ -18,7 +18,8 @@ void Multiple(openphase::Storage3D<double, 1> &var1, openphase::Storage3D<double
 void Multiple(openphase::Storage3D<double, 1> &var, double var1);
 void Sqrt(openphase::Storage3D<double, 1> &var);
 void Limit(openphase::Storage3D<double, 1> &var);
-
+double Max(openphase::Storage3D<double, 1> &var);
+double Max(openphase::Storage3D<double, 2> &var);
 }
 #endif
 

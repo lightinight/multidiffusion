@@ -8,39 +8,43 @@
 #include "storages.h"
 #endif
 #ifndef SETTING_H
-#include "setting.h"
+#include "info.h"
 #endif
 #ifndef COUPLE_H
 #define COUPLE_H
 
 class Couple
 {
-    protected:
-        std::string couplename;
-        std::map<std::string, Profile> couple;
-        std::vector<std::string> elementnames;
-        double initpos;
-        double posleft;
-        double posright;
-        double dx;
-        bool is_interpolated;
-        bool is_getinitpos;
-    public:
-        openphase::Storage3D<double, 1> mcouple;
-        void presetting();
-        Couple();
-        Couple(std::string);
-        Couple(std::string, std::vector<Profile>);
-        void setName(std::string);
-        std::vector< std::string > getElementsName();
-        void insert(std::vector<Profile>);
-        void show();
-        double getInitPos();
-        void makeConserved(std::string ElementName="NONE");
-        void makeInterpolated(double dx=5.0);
-        void makeInfo(Info &info);
-        std::string getCoupleName();
-        std::map<std::string, Couple> read(std::string);
+public:
+    void presetting();
+    Couple();
+    Couple(std::string);
+    Couple(std::string, std::vector<Profile>);
+    Couple(const Couple& _couple);
+    Couple& operator=(const Couple& _couple);
+    void insert(std::vector<Profile>);
+    
+    double getInitPos();
+    void makeInterpolated(double dx);
+    void makeInfo(Info &info);
+    std::string getCoupleName();
+    void setName(std::string);
+    std::vector< std::string > getElementsName();
+    void show();
+    openphase::Storage3D<double, 1>& getMconc();
+    std::map<std::string, Couple> read(std::string);
+    
+protected:
+    std::string couplename;
+    std::vector<std::string> elementnames;
+    std::map<std::string, Profile> couple;
+    openphase::Storage3D<double, 1> mconc;
+    double initpos;
+    double posleft;
+    double posright;
+    
+    bool is_getinitpos;
+    
 };
 #endif
 

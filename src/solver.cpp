@@ -214,5 +214,44 @@ void solver::Limit(openphase::Storage3D<double, 1> &var)
     }
 }
 
+double solver::Max(openphase::Storage3D<double, 1> &var)
+{
+    double maxvalue = 0.0;
+    int Nx = var.sizeX();
+    int Ny = var.sizeY();
+    int Nz = var.sizeZ();
+    int NN = var.sizeN();
+    for(int nx=0; nx<Nx; ++nx)
+    for(int ny=0; ny<Ny; ++ny)
+    for(int nz=0; nz<Nz; ++nz)
+    for(int nn=0; nn<NN; ++nn)
+    {
+        if(var(nx, ny, nz, nn) > maxvalue)
+        {
+            maxvalue = var(nx, ny, nz, nn);
+        }
+    }
+    return maxvalue;
+}
 
-
+double solver::Max(openphase::Storage3D<double, 2> &var)
+{
+    double maxvalue = 0.0;
+    int Nx = var.sizeX();
+    int Ny = var.sizeY();
+    int Nz = var.sizeZ();
+    int N1 = var.sizeN1();
+    int N2 = var.sizeN2();
+    for(int nx=0; nx<Nx; ++nx)
+    for(int ny=0; ny<Ny; ++ny)
+    for(int nz=0; nz<Nz; ++nz)
+    for(int n1=0; n1<N1; ++n1)
+    for(int n2=0; n2<N2; ++n2)
+    {
+        if(var(nx, ny, nz, n1, n2) > maxvalue)
+        {
+            maxvalue = var(nx, ny, nz, n1, n2);
+        }
+    }
+    return maxvalue;
+}

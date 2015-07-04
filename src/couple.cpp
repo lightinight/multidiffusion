@@ -3,13 +3,17 @@ using namespace std;
 void Couple::presetting()
 {
     is_getinitpos = 0;
-    is_interpolated = 0;
-    dx = -1;
 }
 
 Couple::Couple()
 {
     presetting();
+}
+
+Couple::Couple(string _couplename)
+{
+    presetting();
+    couplename = _couplename;
 }
 
 Couple::Couple(string _couplename, vector<Profile> profiles)
@@ -25,10 +29,55 @@ Couple::Couple(string _couplename, vector<Profile> profiles)
     }
 }
 
-Couple::Couple(string _couplename)
+Couple::Couple(const Couple& obj)
 {
     presetting();
-    couplename = _couplename;
+    couple.insert(obj.couple.begin(), obj.couple.end());
+    if(obj.is_getinitpos)
+    {
+        couplename = obj.couplename;
+        elementnames.clear();
+        for(auto each=obj.elementnames.begin(); each!=obj.elementnames.end(); ++each)
+        {
+            elementnames.push_back(*each);
+        }
+        initpos = obj.initpos;
+        posleft = obj.posleft;
+        posright = obj.posright;
+        is_getinitpos = 1;
+    }
+    else
+    {
+        getInitPos();
+    }
+}
+
+Couple& Couple::operator=(const Couple &rhs)
+{
+    if(this != &rhs)
+    {
+        couple.clear();
+        presetting();
+        couple.insert(rhs.couple.begin(), rhs.couple.end());
+        if(rhs.is_getinitpos)
+        {
+            couplename = rhs.couplename;
+            elementnames.clear();
+            for(auto each=rhs.elementnames.begin(); each!=rhs.elementnames.end(); ++each)
+            {
+                elementnames.push_back(*each);
+            }
+            initpos = rhs.initpos;
+            posleft = rhs.posleft;
+            posright = rhs.posright;
+            is_getinitpos = 1;
+        }
+        else
+        {
+            getInitPos();
+        }
+    }
+    return *this;
 }
 
 void Couple::insert(vector<Profile> profiles)
@@ -66,19 +115,9 @@ void Couple::show()
     }
 }
 
-void Couple::makeConserved(string ElementName)
-{
-    if(ElementName.compare(0, ElementName.size(), "NONE") == 0)
-    {
-        return;
-    }
-    if(!is_interpolated) makeInterpolated();
-    //int N = (posright - posleft)/dx;
-
-}
-
 double Couple::getInitPos()
 {
+/*initpos posleft posright is_getinitpos*/
     if(is_getinitpos) return initpos;
 
     map<string, Profile>::iterator iter;
@@ -128,54 +167,35 @@ double Couple::getInitPos()
     return initpos;
 }
 
-void Couple::makeInterpolated(double _dx)
+void
+Couple::makeInterpolated(double _dx)
 {
-    if(is_interpolated) return;
+/*won't call until makeInfo or manually call by the user*/
+/*Strongly commanded that this function should be called manually.*/
     if(!is_getinitpos) getInitPos();
-    if(dx>0.0) _dx = dx;
-    dx = _dx;
-    //Set the spacing step for the interpolated couple data
-    //getInitPos();
-    //get initial position and the values for posleft, posright etc.
 
-    std::map<std::string, std::vector<double> > tcouple;
     map<string, Profile>::iterator iter;
 
-    int N = (posright - posleft)/dx;
+    int N = int((posright - posleft)/_dx) + 1;
     
-    for(auto name=elementnames.begin(); name!=elementnames.end(); ++name)
+    mconc.Clear();
+    mconc.Reallocate(N, 1, 1, elementnames.size());
+    
+    int index = 0;
+    for(auto name=elementnames.begin(); name!=elementnames.end(); ++index, ++name)
     {
         SplinesLoad::CubicSpline spline;
         //use the cubic spline from the SplinesLoad space
-        spline.build(couple[*name].distance, 
-                     couple[*name].concentration);
+        spline.build(couple[*name].getDistance(), 
+                     couple[*name].getConcentration());
         
         double x = posleft;
-        vector<double> tmp;
-        while(x<=posright)
+        for(int nx=0; nx<N; ++nx)
         {
-            tmp.push_back(spline(x));
-            x += dx;
-        }
-        if(int(tmp.size()) < N)
-        {
-            N = tmp.size();
-        }
-        pair<string, vector<double> > pair =
-            make_pair(*name, tmp);
-        tcouple.insert(pair);
-    }
-    
-    mcouple.Allocate(N, 1, 1, couple.size());
-    for(int nx=0; nx<N; ++nx)
-    {
-        int ci = 0;
-        for(auto name=elementnames.begin(); name!=elementnames.end(); ++name, ++ci)
-        {
-            mcouple(nx, 0, 0, ci) = tcouple[*name][nx];
+            x += nx*_dx;
+            mconc(nx, 0, 0, index) = spline(x);
         }
     }
-    is_interpolated = 1;
 }
 
 string Couple::getCoupleName()
@@ -186,13 +206,9 @@ string Couple::getCoupleName()
 void Couple::makeInfo(Info &info)
 {
     if(!is_getinitpos) getInitPos();
-    if(!is_interpolated) makeInterpolated();
 
     info.Couplename = couple.begin()->second.getCoupleName();
 
-    info.Nx = int((posright-posleft)/dx);
-    info.Ny = 1;
-    info.Nz = 1;
     info.Time = couple.begin()->second.getTime();
     info.Temperature = couple.begin()->second.getTemperature();
 
@@ -207,12 +223,15 @@ void Couple::makeInfo(Info &info)
             make_pair(*name, couple[*name].getCright());
         info.Cleft.insert(pair_cleft);
         info.Cright.insert(pair_cright);
-
-        pair<string, int> pair_pos = \
-            make_pair(*name, int((initpos-posleft)/dx));
-        //the grid position will be returned.
-        info.Position.insert(pair_pos);
     }
+    info.PosLeft = posleft;
+    info.PosRight = posright;
+    info.PosInit = initpos;
+}
+
+openphase::Storage3D<double, 1>& Couple::getMconc()
+{
+    return mconc;
 }
 
 map<string, Couple> Couple::read(string filepath)
@@ -241,9 +260,10 @@ map<string, Couple> Couple::read(string filepath)
             }
         }
         c.insert(p);
-        c.show();
+        //c.show();
         pair<string, Couple> pair1 = make_pair(*jter, c);
         couples.insert(pair1);
     }
     return couples;
 }
+

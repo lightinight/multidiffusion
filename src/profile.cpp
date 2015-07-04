@@ -4,19 +4,58 @@ using namespace std;
 Profile::Profile(const Profile& profile)
 {
     distance.clear();
-    distance.clear();
+    concentration.clear();
+    
     couplename = profile.couplename;
     elementname = profile.elementname;
     time = profile.time;
     temperature = profile.temperature;
-    copy(profile.distance.begin(), profile.distance.end(), back_inserter(distance));
-    copy(profile.concentration.begin(), profile.concentration.end(), back_inserter(concentration));
+    for(auto item=profile.distance.begin(); item!=profile.distance.end(); ++item)
+    {
+        distance.push_back(*item);
+    }
+    for(auto item=profile.concentration.begin(); item!=profile.concentration.end(); ++item)
+    {
+        concentration.push_back(*item);
+    }
+    //copy(profile.distance.begin(), profile.distance.end(), back_inserter(distance));
+    //copy(profile.concentration.begin(), profile.concentration.end(), back_inserter(concentration));
     cleft = profile.cleft;
     cright = profile.cright;
 }
 
+Profile& Profile::operator=(const Profile &rhs)
+{
+    if(this != &rhs)
+    {
+        distance.clear();
+        concentration.clear();
+        
+        couplename = rhs.couplename;
+        elementname = rhs.elementname;
+        time = rhs.time;
+        temperature = rhs.temperature;
+        for(auto item=rhs.distance.begin(); item!=rhs.distance.end(); ++item)
+        {
+            distance.push_back(*item);
+        }
+        for(auto item=rhs.concentration.begin(); item!=rhs.concentration.end(); ++item)
+        {
+            concentration.push_back(*item);
+        }
+        //copy(rhs.distance.begin(), rhs.distance.end(), back_inserter(distance));
+        //copy(rhs.concentration.begin(), rhs.concentration.end(), back_inserter(concentration));
+        cleft = rhs.cleft;
+        cright = rhs.cright;
+    }
+    return *this;
+}
+
 Profile::Profile(string _couplename, string _elementname, double _time, double _temperature, vector<double> _distance, vector<double> _concentration, double _cleft, double _cright)
 {
+    distance.clear();
+    concentration.clear();
+    
     couplename = _couplename;
     elementname = _elementname;
     time = _time;
@@ -110,6 +149,65 @@ vector<Profile> Profile::read(string filepath)
         jter->show();
     }*/
     return profiles;
+}
+
+vector<Profile> Profile::readString(std::string inputstring)
+{
+    std::vector<std::string> inputs;
+    strtool::split(inputstring, inputs, "\n");
+    std::string inbufer;
+    
+    int linenum = 0;
+    for(auto each=inputs.begin(); each!=inputs.end(); ++each)
+    {
+        string line = *each;
+        //deal with empty line
+        if(line.empty())
+        {
+            cout<<"line "<<linenum<<" was left out!"<<endl;
+            continue;
+        }
+        //deal with a line begin with '#'
+        int notation = line.find_first_not_of(" ", 0);
+        if(line.compare(notation, 1, "#")==0)
+        {
+            cout<<"line "<<linenum<<" was commented away!"<<endl;
+            continue;
+        }
+        //deal with a code line with annotation at the end
+        vector<string> tmp;
+        strtool::split(line, tmp, "#");
+        if(tmp.size()>1)
+        {
+            line = tmp[0];
+        }
+        line = strtool::trim(line);
+        vector<string> lines;
+        string t = "a";
+        strtool::split(line, lines, " ");
+        vector<string>::iterator jter;
+        for(jter = lines.begin(); jter<lines.end(); ++jter)
+        {
+            inbufer += *jter;
+            inbufer += " ";
+        }
+        linenum++;
+    }
+
+    vector<string> result;
+    strtool::split(inbufer, result, "DATA");
+
+    vector<Profile> profiles;
+    vector<string>::iterator iter;
+    for( iter = result.begin(); iter<result.end(); iter++)
+    {
+        if(iter->size() <= 1) continue;
+        Profile profile = splitData(*iter);
+        profile.sort();
+        profiles.push_back(profile);
+    }
+    return profiles;
+    
 }
 
 Profile Profile::splitData(string dataset_str)
@@ -260,7 +358,7 @@ void Profile::show()
     cout<<"Matano Plane     : "<<getInitPos()<<endl;
     int nsize = distance.size();
     cout<<"Total data ponits: "<<nsize<<endl;
-    cout<<"--------------D A T A---------------"<<endl;
+    cout<<"D A T A: "<<endl;
     cout<<"   distance         concentration"<<endl;
     cout<<" *1.0e-6 meter          at.%     "<<endl;
     for(int i=0; i<5; i++)
@@ -360,6 +458,14 @@ string Profile::getElementName()
     return elementname;
 }
 
+vector<double> Profile::getDistance()
+{
+    return distance;
+}
+vector<double> Profile::getConcentration()
+{
+    return concentration;
+}
 /*
 SplinesLoad::CubicSpline &Profile::getspline()
 {
